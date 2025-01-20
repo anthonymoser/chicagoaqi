@@ -1,0 +1,9 @@
+"Air Quality Index
+ (AQI) Values",Levels of Health Concern,Colors
+When the AQI is in this range:,..air quality conditions are:,...as symbolized by this color:
+0-50,Good,Green
+51-100,Moderate,Yellow
+101-150,Unhealthy for Sensitive Groups,Orange
+151 to 200,Unhealthy,Red
+201 to 300,Very Unhealthy,Purple
+301 to 500,Hazardous,Maroon
