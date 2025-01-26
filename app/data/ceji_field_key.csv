@@ -1,0 +1,38 @@
+var_name,readable_name,indicator_class,definition
+PM25,Particulate Matter 2.5 (PM2.5),ENV_EXPOSURES,"PM2.5 levels in air, µg/m3 annual average "
+OZONE,Ozone,ENV_EXPOSURES,Ozone summer seasonal average of daily maximum 8-hour concentration in air 
+DIESEL,Diesel Particulate Matter,ENV_EXPOSURES,A mixture of particles that is part of diesel exhaust. US EPA lists diesel exhaust as a mobile-source air toxic due to the cancer and noncancer health effects linked to exposure to whole diesel exhaust. Diesel PM has been used as a surrogate exposure measure for whole diesel exhaust. 
+CANCER,Air Toxics Cancer Risk,ENV_EXPOSURES,"The probability of contracting cancer over the course of a lifetime, assuming continuous exposure (assumed in AirToxScreen to be 70 years)."
+TRELEASES,Toxic Releases,ENV_EXPOSURES,Risk-Screening Environmental Indicators (RSEI) modeled toxicity-weighted concentrations in air of Toxic Release Inventory (TRI) listed chemicals. 
+TRAFFIC,Traffic Proximity and Volume,ENV_EXPOSURES,"Count of vehicles (AADT, average annual daily traffic) at major roads within 500 meters, divided by distance in meters (not kilometers) "
+HINDEX,Air Toxics All-Organ Hazard Index,ENV_EXPOSURES,"The sum of hazard quotients for toxics that affect the same target organ or organ system. Because different air toxics can cause similar adverse health effects, combining hazard quotients from different toxics is often appropriate. As with the hazard quotient, exposures below a Hazard Index (HI) of 1.0 likely will not result in adverse noncancer health effects over a lifetime of exposure. An HI equal to or greater than 1.0, however, doesn’t necessarily suggest a likelihood of adverse effects."
+LEAD,Childhood Lead Poisoning,ENV_EXPOSURES,Percent of children ages 1-5 with blood lead level at or above 5 micrograms per deciliter 
+ENV_EXPOSURES,Environmental Exposure Average,,Environmental Exposure component indicator average
+FREIGHT,Freight Rail Lines,ENV_CONDITIONS,Sum of proximity-weighted freight rail lines within each census tract.
+TRI,TRI Facilities,ENV_CONDITIONS,Sum of proximity-weighted TRI facilities.  
+RMP,Risk Management (RMP) Sites,ENV_CONDITIONS,Sum of proximity-weighted RMP sites. 
+PSITES,Polluted Sites,ENV_CONDITIONS,"Sum of proximity-weighted Superfund, Brownfields, and Active Illinois Site Remediation Program (SRP) sites.  "
+HWASTE,Hazardous Waste Facilities,ENV_CONDITIONS,"Sum of proximity-weighted Resource Conservation and Recovery Act (RCRA) Transport, Storage, and Disposal Facilities (TSDFs) and Large Quantity Generators (LQGs). "
+WATER,Wastewater Discharge,ENV_CONDITIONS,"RSEI modeled toxic concentrations at stream segments within 500 meters, divided by distance in kilometers (km) "
+CONFACILITIES,Consequential Facilities,ENV_CONDITIONS,"Sum of proximity-weighted consequential facilities (Classes III, IVA, IVB and V recycling; Outdoor storage of raw materials, as a principal use; Warehousing, wholesaling, and freight movement; Waste-related uses; Coke and coal bulk material uses; Container storage; Windrow composting; Freight terminals; Manganese bearing material uses; Intensive manufacturing, production, and industrial service) within each census tract. "
+ENV_CONDITIONS,Environmental Conditions Average,,Environmental Conditions component indicator average (weighted by 1/2) 
+POLLUTION_BURDEN,Pollution Burden Indicator,,Average of the percentiles from the Pollution Burden indicators (with a half weighting for the Environmental Conditions indicators).
+POLLUTION_BURDEN_SCORE,Pollution Burden Score,,Pollution Burden variable scaled with a potential range of 0-10 (Used to calculate Chicago EJ Index score)
+PEOPLEOFCOLOR,People of Color,SES_FACTORS,"Percent of population who list their race as a race other than white and/or list their ethnicity as Hispanic or Latino (i.e., all people other than non-Hispanic white-alone individuals) "
+NOINSURANCE,No Health Insurance,SES_FACTORS,Percent of residents without health insurance (at the time of survey) 
+HOUSING,"Housing Burdened, Low Income Households",SES_FACTORS,"Percent of households with annual income less than $75,000 who are considered burdened by housing costs (pay greater than 30% of monthly income on housing expenses) "
+LOWINCOME,Low Income,SES_FACTORS,Percent of households where the household income is less than or equal to twice the federal 'poverty level' 
+HIGHSCHOOL,Less than High School Education,SES_FACTORS,Percent of population (age 25+) with no high school diploma 
+UNEMPLOYMENT,Unemployment,SES_FACTORS,Percent of population age 16 and older who are unemployed 
+LINGISOLATION,Linguistic Isolation,SES_FACTORS,"Percent of households in which everyone age 14 years or older speak a non-English language and also speak English less than ""very well"" "
+SES_FACTORS,Socioeconomic Factor Average,,Socioeconomic Factor component indicator average
+CHD,Coronary Heart Disease,SENSITIVE_POP,"Percent of adults who report ever having been told by a doctor, nurse, or other health professional that they had angina or coronary heart disease "
+ASTHMA,Asthma,SENSITIVE_POP,"Percent of adults who report ever having been told by a doctor, nurse or other health professional that they had asthma, and they still have asthma "
+DISABILITY,Disability,SENSITIVE_POP,"Percent of civilian, noninstitutionalized population with a disability "
+YOUNG,Young ( <18 ),SENSITIVE_POP,Percent of population aged 17 and younger 
+OLD,Old ( 65+ ),SENSITIVE_POP,Percent of population aged 65 and older 
+LBW,Low Birthweight,SENSITIVE_POP,"Percent of singleton births where infants are born weighing less than 2,500 grams "
+SENSITIVE_POP,Sensitive Population Average,,Sensitive Population component indicator average
+POP_CHARACTERISTICS,Population Characteristics Average,,Average of the percentiles from the Population Characteristics indicators.
+POP_CHARACTERISTICS_SCORE,Population Characteristics Score,,Population Characteristics variable scaled with a potential range of 0-10 (Used to calculate Chicago EJ Index score)
+CEJI_SCORE,Chicago EJ Index Score,,"Chicago EJ Index score, Pollution Burden score multiplied by the Population Characteristics score"
