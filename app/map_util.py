@@ -1,42 +1,68 @@
 from ipyleaflet import GeoJSON, LayerGroup, WidgetControl
 from ipywidgets import Text, HTML
 import json 
+import geopandas as gpd 
+import pandas as pd 
 
 class MapLayer:
-    label: str 
-    filename: str 
-    name_field: str 
+    label: str
+    layer_type: str # "points" | "bounds"
+    point_label: str 
+    filename: str  
     style: dict 
-
-
-def get_map_layer(filename, style_overrides:dict = {}):
-    style = {
-            "opacity": 1,  
-            "dashArray": "9",  
-            "fillOpacity": 0.1,  
-            "weight": 1,
-    }
-    style.update(style_overrides)
-    with open(f"data/{filename}", "r") as f:
-        boundaries = json.load(f)
+    gdf: gpd.GeoDataFrame
+    def __init__(self, label, layer_type, point_label, filename, style) -> None:
+        self.label = label
+        self.layer_type = layer_type
+        self.point_label = point_label
+        self.filename = filename
+        self.style = style 
+        self.gdf = gpd.read_file(f'data/{self.filename}').set_geometry('geometry')
     
-    geo_json = GeoJSON(  
-        data=boundaries,  
-        style=style,
-        hover_style={"color": "white", "dashArray": "0", "fillOpacity": 0.5},  
-    )  
-
-    return geo_json
+    def __repr__(self):
+        return self.label
+        
 
 
-map_layers = [
-    MapLayer(
+
+map_layer_config = {
+    "corridors": MapLayer(
         label = "Industrial corridors",
+        layer_type = "bounds",
+        point_label = "Industrial corridor",
         filename = "Boundaries - Industrial Corridors (current).geojson",
-        name_field = 'name',
         style =  {
-                    "color": "red", 
-                    "fillOpacity": 0.25
+                    "color": "grey", 
+                    "weight":.75,
+                    "fillOpacity": 0.5
                 }
+    ), 
+    "communities": MapLayer(
+        label = "Community areas", 
+        layer_type = "bounds",
+        point_label = "Community area",
+        filename = "Boundaries - Community Areas (current).geojson",
+        style =  {
+            "color": "grey", 
+            "fillOpacity": 0,
+            "weight": 0.6
+        }
+    ),
+    "tracts": MapLayer(
+        label = "Census tracts", 
+        layer_type = "bounds",
+        point_label = "Census tract",
+        filename = "ej_index.geojson",
+        style =  {}
     )
-]
+}
+
+def locate_point(lat, long, bounds):
+    marker = gpd.points_from_xy(x=long, y=lat, crs="EPSG:4326")
+    mf = gpd.GeoDataFrame(marker).set_geometry(0).rename_geometry('geometry')
+    result = gpd.sjoin(bounds, mf)
+    if len(result) > 0:
+        return result.head(1)['name'].squeeze()
+    else:
+        return None 
+

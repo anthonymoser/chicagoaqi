@@ -3,25 +3,25 @@ from ipyleaflet import AwesomeIcon, GeoJSON, Map, Marker, SearchControl, LayersC
 import ipyleaflet
 from shiny import App, ui, render, reactive 
 from shiny.types import ImgData
-from shinywidgets import output_widget, render_widget  
+from shinywidgets import output_widget, render_widget, register_widget  
 import branca 
 import json
 from uuid import uuid4 
 import pandas as pd 
-from map_util import map_layer_config, MapLayer, locate_point
+from map_util import map_layer_config as mlc, MapLayer, locate_point
 import base64 
 import io 
+import copy 
 
 from google.cloud import bigquery 
 import os 
 
-try:
-    bq = bigquery.Client()                              
-except Exception as e:
-    print(e)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'cloud_function_invoker.json'
-    bq = bigquery.Client()                              
-
+# try:
+    # bq = bigquery.Client()                              
+# except Exception as e:
+#     print(e)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'cloud_function_invoker.json'
+bq = bigquery.Client()                              
 aqi_table = pd.read_csv('data/aqi_table.csv')
 
 ej_indices = {
@@ -90,7 +90,6 @@ eji_fields = pd.read_csv('data/ceji_field_key.csv')
 eji_field_labels = dict(zip(eji_fields.var_name.to_list(), eji_fields.readable_name.to_list()))
 eji_field_labels_reversed = dict(zip(eji_fields.readable_name.to_list(), eji_fields.var_name.to_list()))
 
-
 app_ui = ui.page_auto( 
     ui.output_image("logo", inline=True),
     ui.div( ui.help_text("a tool from Neighbors For Environmental Justice"), id="attribution", style="text-align: right;"),
@@ -128,7 +127,6 @@ app_ui = ui.page_auto(
                 ),
             ),
         ),
-
         ui.nav_panel( "Why we're doing this",
             ui.div( 
             ui.accordion(
@@ -340,76 +338,53 @@ app_ui = ui.page_auto(
 )
 
 def server(input, output, session):
-    
-    with open(f"data/ej.geojson", "r") as f:
-        tracts = json.load(f)
-    
+
     with open(f"data/tract_ids.json", "r") as f:
         tract_json = json.load(f)
 
     ejiv = pd.read_csv('data/ej_index_values.csv')
     center = (41.8228883909135, -87.6771203648879)
-    drag_marker = Marker(location=center, draggable=True, title="Suggested Location", name="SELECTED POINT")
-    search_marker = Marker()
-    coordinates = reactive.Value([41.8228883909135, -87.6771203648879])
-    census_tract = reactive.Value()
+
+    with reactive.isolate():
+        drag_marker = Marker(location=center, draggable=True, title="Suggested Location", name="SELECTED POINT")
+        search_marker = Marker()
+        coordinates = reactive.Value([41.8228883909135, -87.6771203648879])
+        census_tract = reactive.Value()
+        suggested_locations = reactive.Value()  
+        point_details = reactive.Value({})
+
+    map_sequence1 = reactive.value()
+    map_sequence2 = reactive.value()
+    map_sequence3 = reactive.value()
+    map_sequence4 = reactive.value()
+
+    current_choro_layer = reactive.Value()
+    explore_map = Map(center=center, zoom=11)
 
     the_map = Map(center=center, zoom=12).add(drag_marker)
-    explore_map = Map(center=center, zoom=11).add(drag_marker)
-    explore_map_layers = {}
-    point_details = reactive.Value({})
+    control = LayersControl(position='topright', collapsed=False, id="layer_control")
     search = SearchControl(
         position="topleft",
         url='https://nominatim.openstreetmap.org/search?format=json&q={s}',
         zoom=17,
         marker=search_marker
     )
-    explore_map.add(search)
+    
     print("server initialized")
 
-    def is_feature_selected(feature):
-        if 'GEOID' in feature['properties']:
-            if feature['properties']['GEOID'] == census_tract():
-                print("SELECTED TRACT!!!")
-                return {
-                    'fillOpacity': .1,
-                    'color': "black",
-                    'weight':3
-                    }
-            else:
-                return {
-                    'fillOpacity': 0,
-                    'color': "black",
-                    'weight':.1
-                    }
-        
-    def get_map_layer(filename, style_overrides:dict = {}):
-        print(f"Getting map layer: {filename}")
 
-        with open(f"data/{filename}", "r") as f:
-            boundaries = json.load(f)
-        
-        geo_json = GeoJSON(  
-            data=boundaries,  
-            style=style_overrides,
-            style_callback = is_feature_selected  
-        )  
-
-        return geo_json
+    @render.image
+    def logo():
+        img: ImgData = {"src": str("assets/chicagoaqi.png"), "width": "100%"}
+        return img
     
     def on_found(**kwargs):
-        # Print the result of the search (text, location etc)
-        print(kwargs)
         drag_marker.visible = False
         search_marker.visible = True 
         search_marker.location = kwargs['location']
-        coordinates.set(search_marker.location)
+        # coordinates.set(search_marker.location)
 
     search.on_location_found(on_found)
-
-    control = LayersControl(position='topright', collapsed=False, id="layer_control")
-    explore_map.add(control)
-
     suggestion_id = reactive.Value(None) 
     session_id = str(uuid4())
 
@@ -420,53 +395,40 @@ def server(input, output, session):
             if input.show_suggestions() is True:
                 get_suggestions()
 
-            if input.show_suggestions() is False:
-                for lay in explore_map.layers:
-                    if lay.name == "Suggestions":
-                        explore_map.remove(lay)
+            # if input.show_suggestions() is False:
+            #     for lay in explore_map.layers:
+            #         if lay.name == "Suggestions":
+            #             explore_map.remove(lay)
         except Exception as e:
             print("Error with suggestions layer")
             print(e)
-            print(lay)
 
-    
+
     @reactive.effect # Explore data choropleth layers
+    @reactive.event(input.index_layers)
     def _():
         print(input.index_layers())
-        choro_data = dict(zip(ejiv['GEOID'].astype('str').to_list(), ejiv[ejiv.measure == input.index_layers()]['value'].astype('float').to_list()))
-        layer = ipyleaflet.Choropleth(
-            geo_data=tract_json,
-            choro_data=choro_data,
-             colormap=branca.colormap.LinearColormap(
-                colors = ['white', 'yellow', 'orange', 'red'], 
-            ),
-
-            border_color='black',
-            style={
-                'fillOpacity': 0.6, 
-                'weight':.2
-        })
-
-        layer.name = eji_field_labels[input.index_layers()]
-        replace = None
-        try:
-            for lay in explore_map.layers:
-                if lay.name in eji_fields.readable_name.to_list():
-                    print(f"Layer to replace: {lay.name}")
-                    replace = lay   
-        except Exception as e:
-            print(e)
-            print("Failed to identify old choro layer to replace")
-        
-        try:
-            if replace is not None:
-                print("swapping layers")                
-                print(replace)
-                explore_map.substitute(replace, layer)
-            else:
-                explore_map.add(layer)
-        except Exception as e:
-            print(f"Failed to substitute choro layer: {e}")
+        if input.primary_nav == "Explore data": 
+            
+            replace = None
+            try:
+                for lay in explore_map.layers:
+                    if lay.name in eji_fields.readable_name.to_list():
+                        print(f"Layer to replace: {lay.name}")
+                        replace = lay   
+            except Exception as e:
+                print(e)
+                print("Failed to identify old choro layer to replace")
+            
+            try:
+                if replace is not None:
+                    print("swapping layers")                
+                    # print(replace)
+                    explore_map.substitute(replace, layer)
+                else:
+                    explore_map.add(layer)
+            except Exception as e:
+                print(f"Failed to substitute choro layer: {e}")
 
     
     def handle_click(**kwargs):
@@ -474,7 +436,8 @@ def server(input, output, session):
             drag_marker.visible = True 
             search_marker.visible = False 
             drag_marker.location=kwargs.get('coordinates')
-            coordinates.set(drag_marker.location)
+            if(input.primary_nav()) == "Explore data":
+                coordinates.set(drag_marker.location)
 
     the_map.on_interaction(handle_click)
     explore_map.on_interaction(handle_click)
@@ -560,22 +523,22 @@ def server(input, output, session):
         return table 
 
     @reactive.effect 
-    @reactive.event(coordinates)
+    # @reactive.event(coordinates)
     def _():
         print("Coordinates: ", coordinates())
-        print(input.primary_nav())
-        new_details = {}
-        for ml in map_layer_config:
-            print(f"locating point in {ml.label}")
-            area = locate_point(lat = [ coordinates()[0] ], long = [ coordinates()[1] ], bounds = ml.gdf)
-            print("located")
-            if area:
-                new_details[ml.point_label] = area 
+        if input.primary_nav() == "Explore data":
+            new_details = {}
+            for ml in mlc:
+                print(f"locating point in {mlc[ml].label}")
+                area = locate_point(lat = [ coordinates()[0] ], long = [ coordinates()[1] ], bounds = mlc[ml].gdf)
+                print("located")
+                if area:
+                    new_details[mlc[ml].point_label] = area 
 
-        if 'Census tract' in new_details:
-            census_tract.set(new_details['Census tract'])
+            if 'Census tract' in new_details:
+                census_tract.set(new_details['Census tract'])
 
-        point_details.set(new_details)
+            point_details.set(new_details)
 
     @render.table
     def aqi_ranges():
@@ -599,9 +562,9 @@ def server(input, output, session):
     
     def get_suggestions():
         
-        query = "SELECT lat, long, label FROM chicago_aqi.suggested_locations"
-        results = bq.query(query)
-        suggestions = [{"location": (r.lat, r.long), "label":r.label} for r in results]
+        query = "SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations"
+        result = bq.query(query).to_dataframe()
+
         layer_group = LayerGroup()
         icon = AwesomeIcon(
             name='circle',
@@ -609,9 +572,9 @@ def server(input, output, session):
             # icon_color='black',
             spin=False
         )
-        for s in suggestions:
+        for r in result.to_dict('records'):
             spot = Marker(
-                location=s['location'],
+                location=(r['lat'], r['long']),
                 icon=icon,
                 opacity=.5,
                 draggable=False, 
@@ -620,12 +583,12 @@ def server(input, output, session):
             layer_group.add(spot)
         layer_group.name = "Suggestions"
         explore_map.add(layer_group)
+        suggested_locations.set(result)
 
 
     @reactive.effect 
     @reactive.event(input.btn_submit)
     def _():
-
         if drag_marker.visible:
             suggested_location = drag_marker.location 
         elif search_marker.visible:
@@ -658,8 +621,8 @@ def server(input, output, session):
             ),
             buttons = [ui.modal_button("No thanks"), ui.input_action_button("email_signup", "Sign me up!")]
         )
-        get_suggestions()
         ui.modal_show(m)
+        ui.update_checkbox("show_suggestions", value=True)
         ui.update_navs("primary_nav", selected="Explore data")
     
     @reactive.effect 
@@ -687,7 +650,7 @@ def server(input, output, session):
     def mark_user_location():
         user_location = (input.lat(), input.long())
         drag_marker.location = user_location
-        coordinates.set(drag_marker.location) 
+        # coordinates.set(drag_marker.location) 
 
         the_map.center = user_location 
         the_map.zoom = 17 
@@ -717,37 +680,118 @@ def server(input, output, session):
             details+= f"{key}: {point_details()[key]}\n"
         return details
 
-    @render_widget
-    def explore_data():
-        print("RENDERING EXPLORE MAP")
-        layers = [layer.name for layer in explore_map.layers]
-        print(layers)
-        for dl in map_layer_config:
-            if dl.label not in layers:
-                ml = get_map_layer(filename=dl.filename, style_overrides=dl.style)
-                ml.name = dl.label
-                explore_map_layers[dl.label] = ml 
-                explore_map.add(ml)
 
-            elif dl.label == "Census tracts":
-                try:
-                    ml = get_map_layer(filename=dl.filename, style_overrides=dl.style)
-                    ml.name = dl.label
-                    explore_map.substitute(explore_map_layers[dl.label], ml)
-                    explore_map_layers[dl.label] = ml 
-                except Exception as e:
-                    print("error with explore_data() rendering of cens tracts")
-                    print(e)
+    def is_feature_selected(feature):
+        if 'GEOID' in feature['properties']:
+            if feature['properties']['GEOID'] == census_tract():
+                print("SELECTED TRACT!!!")
+                return {
+                    'fillOpacity': .1,
+                    'color': "black",
+                    'weight':3
+                    }
+            else:
+                return {
+                    'fillOpacity': 0,
+                    'color': "black",
+                    'weight':.1
+                    }
         
-        return explore_map
+    def get_map_layer(layer_name:str, filename:str, style_overrides:dict = {}):
+        print(f"Getting map layer: {filename}")
+        with open(f"data/{filename}", "r") as f:
+            boundaries = json.load(f)
+        
+        layer = GeoJSON(  
+            data=boundaries,  
+            style=style_overrides,
+            style_callback = is_feature_selected
+        )  
+        layer.name = layer_name
+        return layer
+
 
     @reactive.effect
-    @reactive.event(input.marker_coordinates)
-    def _():
-        if drag_marker.visible:
-            print("Drag marker: ", drag_marker.location)
-        elif search_marker.location is not None: 
-            print("Search marker: ", search_marker.location)
+    @reactive.event(input.primary_nav, input.index_layers)
+    def get_choro_layer():
+        if input.primary_nav() == "Explore data": 
+            
+            for layer in explore_map.layers:
+                # if layer.name != "OpenStreetMap.Mapnik":
+                    # explore_map.remove(layer)
+                if layer.name in eji_field_labels.values():
+                    explore_map.remove(layer) 
+
+            choro_data = dict(zip(ejiv['GEOID'].astype('str').to_list(), ejiv[ejiv.measure == input.index_layers()]['value'].astype('float').to_list()))
+            choro_layer = ipyleaflet.Choropleth(
+                id = "choro_layer",
+                geo_data=tract_json,
+                choro_data=choro_data,
+                colormap=branca.colormap.LinearColormap(
+                    colors = ['white', 'yellow', 'orange', 'red'], 
+                ),
+                border_color='black',
+                style={
+                    'fillOpacity': 0.6, 
+                    'weight':.2
+            })
+            choro_layer.name = eji_field_labels[input.index_layers()]
+            explore_map.add(choro_layer)
+            current_choro_layer.set(choro_layer.name)
+            
+            try:
+                explore_map.substitute(control, control)
+            except Exception:
+                explore_map.add(control)
+
+    @reactive.effect 
+    @reactive.event(input.primary_nav, input.index_layers)
+    def get_corridors():
+        if input.primary_nav() == "Explore data":
+            explore_map_layers = [layer.name for layer in explore_map.layers]
+            if "Industrial corridors" not in explore_map_layers:
+                explore_map.add(get_map_layer(
+                            layer_name = mlc['corridors'].label,
+                            filename = mlc['corridors'].filename, 
+                            style_overrides = mlc['corridors'].style
+                        ), index=1
+                )
+                     
+    @reactive.effect 
+    @reactive.event(current_choro_layer)
+    def get_communities():
+        if input.primary_nav() == "Explore data":
+            explore_map_layers = [layer.name for layer in explore_map.layers]
+            if "Community areas" not in explore_map_layers:
+                explore_map.add(get_map_layer(
+                            layer_name = mlc['communities'].label,
+                            filename = mlc['communities'].filename, 
+                            style_overrides = mlc['communities'].style
+                        ), index = 1
+                )
+
+    @reactive.effect 
+    @reactive.event(census_tract)
+    def get_tracts():
+        if input.primary_nav() == "Explore data":
+            explore_map_layers = [layer.name for layer in explore_map.layers]
+            print(explore_map_layers)
+            for layer in explore_map.layers:
+                if layer.name == "Census tracts":
+                    explore_map.remove(layer) 
+            
+            explore_map.add(
+                get_map_layer(
+                    layer_name = mlc['tracts'].label,
+                    filename = mlc['tracts'].filename, 
+                    style_overrides = mlc['tracts'].style
+                )
+            )
+    
+    @render_widget
+    def explore_data():
+        return explore_map    
+
 
     def get_modal(title:str|None = None, prompt:str|ui.TagList|None = None, buttons:list = [], size = "m", easy_close=False):
         ui.modal_remove()
@@ -762,8 +806,12 @@ def server(input, output, session):
     @render.download(filename=f"chicagoaqi_suggested_locations_{datetime.now().strftime("%Y%m%d")}.csv" )
     def download_suggestions():        
         with io.BytesIO() as buf:
-            df = bq.query("SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations").to_dataframe()
-            df.to_csv(buf, index=False)
+            # df = bq.query("SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations").to_dataframe()
+            # print(f"Retrieved {len(df)} suggestions")
+            print(len(suggested_locations()))
+            suggested_locations().to_csv(buf, index=False)
+            # df
             yield buf.getvalue()
+
 app = App(app_ui, server)
     
