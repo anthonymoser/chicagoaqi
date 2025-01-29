@@ -11,7 +11,7 @@ import pandas as pd
 from map_util import map_layer_config as mlc, MapLayer, locate_point
 import base64 
 import io 
-import copy 
+import requests 
 
 from google.cloud import bigquery 
 import os 
@@ -112,8 +112,10 @@ app_ui = ui.page_auto(
                         ui.tags.ul(
                             ui.tags.li("Click on the map"),
                             ui.tags.li("Drag the marker"),
-                            ui.tags.li(ui.TagList("Search for an address (click ", ui.HTML("&#x1F50D;"), " on the map)")),
-                            ui.tags.li("Find your current location")
+                            ui.tags.li("Find your current location"),
+                            ui.tags.li(ui.TagList("Search for an address")), # (click ", ui.HTML("&#x1F50D;"), " on the map)")),
+                            ui.input_text(id="address_lookup", label=""),
+                            ui.input_action_button(id="btn_address_lookup", label="Search")
                         ),
                         ui.card_footer(ui.input_action_button("btn_use_location", label="Find my location", width="100%"),)
                     ),
@@ -353,11 +355,6 @@ def server(input, output, session):
         suggested_locations = reactive.Value()  
         point_details = reactive.Value({})
 
-    map_sequence1 = reactive.value()
-    map_sequence2 = reactive.value()
-    map_sequence3 = reactive.value()
-    map_sequence4 = reactive.value()
-
     current_choro_layer = reactive.Value()
     explore_map = Map(center=center, zoom=11)
 
@@ -371,6 +368,30 @@ def server(input, output, session):
     )
     
     print("server initialized")
+
+    @reactive.Effect
+    @reactive.event(input.btn_address_lookup)
+    def _():
+        address = input.address_lookup()
+        headers = {"User-Agent": "ChicagoAQI"}
+        response = requests.get(f"https://nominatim.openstreetmap.org/search?format=json&q={address}", headers=headers)
+        try:
+            results = [r for r in response.json() if "Chicago" in r['display_name'] ]
+            if len(results) > 0:
+                top_result = results[0]
+                search_location = [float(top_result['lat']), float(top_result['lon'])]
+                print(search_location)
+                drag_marker.location = search_location
+                the_map.center = search_location
+                the_map.zoom = 16
+            else:
+                m = get_modal(
+                    title="No results",
+                    prompt=ui.TagList(ui.p("Try searching a different address, using your location, or clicking on the map.")),
+                    buttons = [])
+                ui.modal_show(m)
+        except Exception as e:
+            print("Error searching address")
 
 
     @render.image
@@ -594,6 +615,7 @@ def server(input, output, session):
         elif search_marker.visible:
             suggested_location = search_marker.location 
         
+        coordinates.set(suggested_location)
         suggestion_id.set(str(uuid4()))
 
         query = """
@@ -622,7 +644,7 @@ def server(input, output, session):
             buttons = [ui.modal_button("No thanks"), ui.input_action_button("email_signup", "Sign me up!")]
         )
         ui.modal_show(m)
-        ui.update_checkbox("show_suggestions", value=True)
+        
         ui.update_navs("primary_nav", selected="Explore data")
     
     @reactive.effect 
