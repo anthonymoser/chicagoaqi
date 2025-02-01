@@ -1,14 +1,14 @@
 from datetime import datetime 
-from ipyleaflet import AwesomeIcon, GeoJSON, Map, Marker, SearchControl, LayersControl, LayerGroup, WidgetControl
+from ipyleaflet import AwesomeIcon, GeoJSON, Map, Marker, SearchControl, LayersControl, LayerGroup
 import ipyleaflet
 from shiny import App, ui, render, reactive 
 from shiny.types import ImgData
-from shinywidgets import output_widget, render_widget, register_widget  
+from shinywidgets import output_widget, render_widget  
 import branca 
 import json
 from uuid import uuid4 
 import pandas as pd 
-from map_util import map_layer_config as mlc, MapLayer, locate_point
+from map_util import map_layer_config as mlc, locate_point
 import base64 
 import io 
 import requests 
