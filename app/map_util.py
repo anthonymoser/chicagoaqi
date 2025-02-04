@@ -93,6 +93,40 @@ map_layer_config_chinese = {
 }
 
 
+
+
+map_layer_config_spanish = {
+    "corridors": MapLayer(
+        label = "corredor industrial",
+        layer_type = "bounds",
+        point_label = "corredor industrial",
+        filename = "Boundaries - Industrial Corridors (current).geojson",
+        style =  {
+                    "color": "grey", 
+                    "weight":.75,
+                    "fillOpacity": 0.5
+                }
+    ), 
+    "communities": MapLayer(
+        label = "zona comunidad", 
+        layer_type = "bounds",
+        point_label = "zona comunidad",
+        filename = "Boundaries - Community Areas (current).geojson",
+        style =  {
+            "color": "grey", 
+            "fillOpacity": 0,
+            "weight": 0.6
+        }
+    ),
+    "tracts": MapLayer(
+        label = "distrito censal", 
+        layer_type = "bounds",
+        point_label = "distrito censal",
+        filename = "ej_index.geojson",
+        style =  {}
+    )
+}
+
 def locate_point(lat, long, bounds):
     marker = gpd.points_from_xy(x=long, y=lat, crs="EPSG:4326")
     mf = gpd.GeoDataFrame(marker).set_geometry(0).rename_geometry('geometry')

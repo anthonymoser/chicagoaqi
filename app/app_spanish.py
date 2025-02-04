@@ -8,7 +8,7 @@ import branca
 import json
 from uuid import uuid4 
 import pandas as pd 
-from map_util import map_layer_config_chinese as mlc, MapLayer, locate_point
+from map_util import map_layer_config_spanish as mlc, MapLayer, locate_point
 import base64 
 import io 
 import requests 
@@ -22,7 +22,7 @@ import os
 #     print(e)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'cloud_function_invoker.json'
 bq = bigquery.Client()                              
-aqi_table = pd.read_csv('data/aqi_table_chinese.csv')
+aqi_table = pd.read_csv('data/aqi_table_spanish.csv')
 
 ej_indices = {
         "exposure": ['PM25', 'OZONE', 'DIESEL', 'CANCER', 'TRELEASES','TRAFFIC', 'HINDEX', 'LEAD'],
@@ -92,252 +92,269 @@ eji_field_labels_reversed = dict(zip(eji_fields.readable_name.to_list(), eji_fie
 
 app_ui = ui.page_auto( 
     ui.a(ui.output_image("logo", inline=True), href="/"),
-    ui.div( ui.help_text("由 Neighbors For Environmental Justice (争取环境正义邻居团) 提供的应用"), id="attribution", style="text-align: right;"),
-    # ui.input_select( id="language_choice", label='Language', choices=["English", "Español", "中文"], selected="English", width="120px"),
+    ui.div( ui.help_text("una herramienta de Neighbor for Environmental Justice (Vecinos por la Justicia Ambiental)"), id="attribution", style="text-align: right;"),
+    
     ui.navset_card_underline(
 
-        ui.nav_panel( "建议空气监测器安装地点",
+        # ui.nav_panel( "Suggest a location",
+        ui.nav_panel( "Sugerir una ubicación",
             ui.div( 
-            ui.tags.h4("空气监测器该安装在什么地点？"),
-            ui.p("根据联邦政府协议，", ui.tags.b("市政府承诺安装220部空气监测器，"), "大部分安排安装在大量污染的地区。"), 
-            ui.p(" 市政府现时还没确定空气监测器的安装地点，而本机构希望确保会安装在实用的地点：例如小孩玩耍的地方、货车停留的地方、或者散发异味的地方。"),
-            ui.p("您认为哪里是最佳的安装地点？"),
+            # ui.tags.h4("Where should the air monitors go?"),
+            ui.tags.h4("¿Dónde deberían colocarse los monitores de aire?"),
+            # ui.p("As part of a federal agreement, ", ui.tags.b("Chicago promised to install 220 air monitors, "), "mostly in neighborhoods with a lot of pollution."), 
+            ui.p("Como parte de un acuerdo federal, ", ui.tags.b("Chicago prometió instalar 220 monitores de aire, "), "principalmente en vecindarios con mucha contaminación."), 
+            # ui.p(" The city hasn't decided where to put them yet, and we want to make sure they pick useful locations: maybe a place you see kids playing, or trucks idling, or smell something bad."),
+            ui.p(" La ciudad aún no ha decidido dónde colocarlos, y queremos asegurarnos de que elijan ubicaciones apropiadas: tal vez un lugar donde veas niños jugando, camiones con el motor encendido o donde huela mal."),
+            # ui.p("Where do you think they should go?"),
+            ui.p("¿Dónde crees que deberían colocarse?"),
             
             output_widget(id = "map"),
             ui.row(
                 ui.layout_column_wrap(
                     ui.card(
-                        ui.card_header("在地图上挑选安装地点"),
-                        ui.tags.p("具有四种挑选安装地点的方式："), 
+                        # ui.card_header("1. PICK A SPOT ON THE MAP"),
+                        ui.card_header("1. ELIGE UN LUGAR EN EL MAPA"),
+                        # ui.tags.p("There are four ways to choose:"), 
+                        ui.tags.p("Hay cuatro formas de elegir:"), 
                         ui.tags.ul(
-                            ui.tags.li("在地图上随意点击"),
-                            ui.tags.li("点击地点挑选标志，拉动至所愿地点"),
-                            ui.tags.li("使用您的定位"),
-                            ui.tags.li(ui.TagList(" 搜寻某个地址")), # (click ", ui.HTML("&#x1F50D;"), " on the map)")),
+                            # ui.tags.li("Click on the map"),
+                            ui.tags.li("Haz clic en el mapa"),
+                            # ui.tags.li("Drag the marker"),
+                            ui.tags.li("Mueve el marcador"),
+                            # ui.tags.li("Find your current location"),
+                            ui.tags.li("Encuentra tu ubicación actual"),
+                            # ui.tags.li(ui.TagList("Search for an address")),
+                            ui.tags.li(ui.TagList("Busca una dirección")), 
                             ui.input_text(id="address_lookup", label=""),
-                            ui.input_action_button(id="btn_address_lookup", label="Search")
+                            # ui.input_action_button(id="btn_address_lookup", label="Search")
+                            ui.input_action_button(id="btn_address_lookup", label="Busca")
                         ),
-                        ui.card_footer(ui.input_action_button("btn_use_location", label="判断我的定位", width="100%"),)
+                        # ui.card_footer(ui.input_action_button("btn_use_location", label="Find my location", width="100%"),)
+                        ui.card_footer(ui.input_action_button("btn_use_location", label="Buscar mi ubicación", width="100%"),)
                     ),
                     ui.card(
-                        ui.card_header("简单介绍 (非规定）"),
-                        ui.input_text(id="suggested_label", label="您会如何称呼这个地点？", width="100%"),
-                        ui.input_text_area(id="reason", label="为什么该在这地点安装空气监测器？", width="100%"),
-                        ui.card_footer(ui.input_action_button("btn_submit", label="递交", width="100%"))
+                        # ui.card_header("2. TELL US ABOUT IT (optional)"),
+                        ui.card_header("2.CUÉNTENOS (opcional)"),
+                        # ui.input_text(id="suggested_label", label="What would you call this spot?", width="100%", placeholder="example: McKinley Park / MAT Asphalt / the playground"),
+                        ui.input_text(id="suggested_label", label="¿Qué nombre le pondría a este lugar?", width="100%"),
+                        # ui.input_text_area(id="reason", label="Why put an air monitor there?", width="100%", placeholder="example: I live nearby / it always smells bad"),
+                        ui.input_text_area(id="reason", label="¿Por qué poner un monitor de aire allí?", width="100%"),
+                        # ui.card_footer(ui.input_action_button("btn_submit", label="Submit", width="100%"))
+                        ui.card_footer(ui.input_action_button("btn_submit", label="Enviar", width="100%"))
                     ),
                 ),
                 ),
             ),
         ),
-        ui.nav_panel( "项目目的", # Why we're doing this
+        ui.nav_panel( "Por qué lo estamos haciendo", # Why we're doing this
             ui.div( 
             ui.accordion(
-                ui.accordion_panel( "空气监测器", # Air monitors
-                    ui.p(ui.tags.b("社区为什么需要安装空气监测器？")), #Why do we need air monitors?
+                ui.accordion_panel( "Monitores de aire", # Air monitors
+                    ui.p(ui.tags.b("¿Por qué necesitamos monitores de aire?")), #Why do we need air monitors?
                     ui.tags.ul(
                         # ui.tags.li("In Chicago, how much pollution you breathe depends a lot on where you live"),
-                        ui.tags.li("作为芝加哥的居民，居住地区对空气污染度有重大的影响"),
+                        ui.tags.li("En Chicago, cuánta contaminación respira depende mucho de dónde vive"),
                         # ui.tags.li("Air monitors help us know what we're breathing"),
-                        ui.tags.li("空气监测器能告知我们环境的污染度"), 
+                        ui.tags.li("Los monitores de aire nos ayudan a saber qué estamos respirando"), 
                         # ui.tags.li("On days with the worst air pollution, we can take actions to stay safe, like running air filters and wearing masks"),
-                        ui.tags.li("遇到严重污染时，就可以采取行动缓解污染，例如使用空气清新器以及戴上口罩"),
+                        ui.tags.li("En los días con peor contaminación del aire, podemos tomar medidas para mantenernos a salvo, como correr los filtros de aire y usar máscaras"),
                         # ui.tags.li("We can use this data to push the city to take action"),
-                        ui.tags.li("我们可以使用空气监测器的数据呼吁市政府作出改进")
+                        ui.tags.li("Podemos usar estos datos para presionar a la ciudad para que tome medidas")
                          ),
                     # ui.p(ui.tags.b("Does it matter where they go?")),
-                    ui.p(ui.tags.b("空气监测器的地点重要吗")),
+                    ui.p(ui.tags.b("¿Importa dónde los pongan?")),
                     ui.tags.ul(
                         # ui.tags.li("Yes! Air monitors can only measure what's nearby"), 
-                        ui.tags.li("当然！空气监测器只能测试附近环境的污染度"), 
+                        ui.tags.li("¡Sí! Los monitores de aire solo pueden medir lo que está cerca"), 
                         # ui.tags.li("Depending on weather and nearby sources of pollution, even a few blocks can make a big difference"),
-                        ui.tags.li("天气和附近污染源等因素、甚至仅仅几街头的距离都会影响监测器搜集的数据"),
+                        ui.tags.li("Dependiendo del clima y de las fuentes de contaminación cercanas, incluso unas pocas cuadras pueden hacer una gran diferencia"),
                         # ui.tags.li("The places that have the most pollution in Chicago (South and Southwest Chicago) do not have air monitors installed by the government to measure the air quality")
-                        ui.tags.li("芝加哥地区最高污染度的区域 (南部以及西南部) 并没有安装空气监测器")
+                        ui.tags.li("Los lugares que tienen más contaminación en Chicago (sur y suroeste de Chicago) no tienen monitores de aire instalados por el gobierno para medir la calidad del aire")
                     ),
                     # ui.p(ui.tags.b("What kind of air monitors are they?")),
-                    ui.p(ui.tags.b("什么是空气监测器？")),
+                    ui.p(ui.tags.b("¿Qué tipo de monitores de aire son?")),
                     ui.tags.ul( 
                         # ui.tags.li(ui.a("Clarity Node-S monitors", href="https://www.clarity.io/products/clarity-node-s"), target="_blank"),
-                        ui.tags.li(ui.a("将使用 Clarity 公司制造的 Node-S 型号监测器", href="https://www.clarity.io/products/clarity-node-s"), target="_blank"),
+                        ui.tags.li(ui.a("Monitores Clarity Node-S", href="https://www.clarity.io/products/clarity-node-s"), target="_blank"),
                         # ui.tags.li("They use solar panels, and will be installed on light poles"),
-                        ui.tags.li("监测器使用太阳能运行，将会安装在灯柱上"),
+                        ui.tags.li("Utilizan paneles solares y se instalarán en postes de luz"),
                         # ui.tags.li("They measure particulate matter (PM) and nitrogen dioxide (NO₂)"),
-                        ui.tags.li("监测器将会测试空气的含微粒度和含二氧化氮度"),
+                        ui.tags.li("Miden las partículas en suspensión (PM) y el dióxido de nitrógeno (NO₂)"),
                         # ui.tags.li("They will upload data to a public dashboard"),
-                        ui.tags.li("监测器所搜集的数据将会上载至公开标版网页")
+                        ui.tags.li("Los datos se subirán a un panel de control público")
                     ),
                     # ui.p(ui.tags.b("Doesn't the city have air monitors already?")),
-                    ui.p(ui.tags.b("城市里不是已经有安装空气监测器吗？")),
+                    ui.p(ui.tags.b("¿No tiene la ciudad ya monitores de aire?")),
                     ui.tags.ul(
                         # ui.tags.li("There are only a few government-owned air monitors in or near Chicago"),
-                        ui.tags.li("芝加哥市内和附近地区只安装少量的政府管控空气监测器"),
+                        ui.tags.li("Solo hay unos pocos monitores de aire propiedad del gobierno en Chicago o cerca de ella"),
                         # ui.tags.li("They're mostly not owned by the city, and mostly not in neighborhoods with the worst pollution"),
-                        ui.tags.li("大部分并非由市政府管控，也没有安装在最高污染度的地区"),
+                        ui.tags.li("La mayoría no son propiedad de la ciudad y la mayoría no están en los vecindarios con peor contaminación"),
                         # ui.tags.li("A study found the US EPA puts more air monitors", ui.a(" in white neighborhoods", href="https://www.theguardian.com/environment/2024/dec/14/epa-air-quality-monitors-white-neighborhoods", target="_blank")),
-                        ui.tags.li("研究发现美国 EPA (环境保护署)", ui.a(" 在白人邻里", href="https://www.theguardian.com/environment/2024/dec/14/epa-air-quality-monitors-white-neighborhoods", target="_blank"), "安装空气监测器的数量会高于其他种族的邻里"),
+                        ui.tags.li("Un estudio descubrió que la EPA de EE. UU. ", ui.a(" pone más monitores de aire en los vecindarios blancos", href="https://www.theguardian.com/environment/2024/dec/14/epa-air-quality-monitors-white-neighborhoods", target="_blank")),
                         # ui.tags.li("You can see readings from the ", ui.a("six Illinois EPA monitors", href="https://www.airnow.gov/?city=Chicago&state=IL&country=USA", target="_blank")),
-                        ui.tags.li("伊州具有 ", ui.a("六个 EPA (环境保护署) 监测器 ", href="https://www.airnow.gov/?city=Chicago&state=IL&country=USA", target="_blank"), "数据可以在公开网页参看"),
+                        ui.tags.li("Puedes ver las lecturas de los ", ui.a("seis monitores de la EPA de Illinois ", href="https://www.airnow.gov/?city=Chicago&state=IL&country=USA", target="_blank")),
                         # ui.tags.li("Community groups and residents have also put up air monitors ", ui.a("on their own", href="https://map.purpleair.com/air-quality-standards-us-epa-aqi?opt=%2F1%2Flp%2Fa0%2Fp604800%2FcC0#10.6/41.8697/-87.674", target="_blank"))
-                        ui.tags.li("某些社区团体以及独立居民也有 ", ui.a("私家安装监测器", href="https://map.purpleair.com/air-quality-standards-us-epa-aqi?opt=%2F1%2Flp%2Fa0%2Fp604800%2FcC0#10.6/41.8697/-87.674", target="_blank"))
+                        ui.tags.li("Los grupos comunitarios y los residentes ", ui.a("también han instalado monitores de aire", href="https://map.purpleair.com/air-quality-standards-us-epa-aqi?opt=%2F1%2Flp%2Fa0%2Fp604800%2FcC0#10.6/41.8697/-87.674", target="_blank"))
                     )
 
                 ),                    
                 # ui.accordion_panel( "Pollution",
-                ui.accordion_panel( "污染", 
+                ui.accordion_panel( "Contaminación", 
                     # ui.p(ui.tags.b("What is air pollution?")),
-                    ui.p(ui.tags.b("空气污染是什么？")),
+                    ui.p(ui.tags.b("¿Qué es la contaminación del aire?")),
                     ui.tags.ul(
                         # ui.tags.li("Pollution is tiny bits of stuff we inhale when we breathe"), 
-                        ui.tags.li("空气污染是人类通过呼吸意外吸收的微小物体"), 
+                        ui.tags.li("La contaminación son pequeñas partículas que inhalamos cuando respiramos."), 
                         # ui.tags.li("It can be made of gases, or tiny particles that are 100 times thinner than a human hair"),
-                        ui.tags.li("空气污染包含着气体，或者比头发稀薄100倍的微粒物体"),
+                        ui.tags.li("Puede estar formada por gases o partículas diminutas que son 100 veces más finas que un cabello humano."),
                         # ui.tags.li("Sometimes you can smell, see, or feel pollution, but mostly we don’t know what we’re breathing")
-                        ui.tags.li("偶尔空气污染是可以肉眼看到、嗅觉闻到、或能触碰，但大部分的时间人类的感官是无法察觉到空气污染")
+                        ui.tags.li("A veces podemos oler, ver o notar la contaminación, pero la mayoría de las veces no sabemos que lo estamos respirando.")
                     ),
                     # ui.p(ui.tags.b("Where does air pollution come from?")),
-                    ui.p(ui.tags.b("空气污染源于哪里？")),
+                    ui.p(ui.tags.b("¿De dónde viene la contaminación del aire?")),
                     ui.tags.ul(
                         # ui.tags.li("Transportation: cars, trucks, and trains"), 
-                        ui.tags.li(" 交通：汽车、货车、火车"), 
+                        ui.tags.li("Transporte: coches, camiones y trenes."), 
                         # ui.tags.li("Industry: factories, asphalt plants, construction equipment and diesel vehicles"),
-                        ui.tags.li("工业：工厂、柏油生产厂、施工工具、以及柴油汽车"),
+                        ui.tags.li("Industria: fábricas, plantas de asfalto, equipos de construcción y vehículos diésel"),
                         # ui.tags.li("Natural sources: smoke from wildfires, dust blown by the wind"),
-                        ui.tags.li("自然来源：野火的冒烟、风吹的微尘"),
+                        ui.tags.li("Fuentes naturales: humo de incendios forestales, polvo que corre por el viento"),
                         # ui.tags.li("In Chicago, city policies put pollution in communities of color and low-income communities."),
-                        ui.tags.li("芝加哥市政的政策把污染放置在非白人邻里以及低收入邻里"),
+                        ui.tags.li("En Chicago, las decisiones políticas de la ciudad han provocado que la contaminación afecte principalmente a comunidades de color y de bajos ingresos."),
                         # ui.tags.li("This practice is called environmental racism"),
-                        ui.tags.li("这样的做法叫做环境种族歧视"),
+                        ui.tags.li("Esta práctica está motivada por el racismo medioambiental"),
                         # ui.tags.li("These new air monitors are part of an contract signed by the city promising to address environmental racism"),
-                        ui.tags.li("将会安装的空气监测器是市政府签了正视环境种族歧视合约的行动之一"),
+                        ui.tags.li("Estos nuevos monitores de aire son parte de un contrato firmado por la ciudad que promete abordar el racismo medioambiental"),
                     ),
                     # ui.p(ui.tags.b("How bad is it for your health?")),
-                    ui.p(ui.tags.b("空气污染有多损害健康？")),
+                    ui.p(ui.tags.b("Cómo afecta a la salud")),
                     ui.tags.ul(
                         # ui.tags.li("It makes existing health problems worse"), 
-                        ui.tags.li("会恶化现有疾病"), 
+                        ui.tags.li("Empeora los problemas de salud existentes"), 
                         # ui.tags.li("It causes new health problems, like asthma, headaches, and chest pain"),
-                        ui.tags.li("会导致各种疾病，例如哮喘、头痛、胸痛"),
-                        # ui.tags.li("The combined effect of of outdoor air pollution and indoor air pollution ", ui.a("kills about 6.7 million people", href="https://www.who.int/data/gho/data/indicators/indicator-details/GHO/ambient-air-pollution-attributable-deaths", target="_blank"), " around the world every year."),
-                        ui.tags.li("室内室外的空气污染整体负面影响导致全球 ", ui.a("每年大约67万宗死亡", href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health", target="_blank")),
+                        ui.tags.li("Causa nuevos problemas de salud, como asma, dolores de cabeza y dolor en el pecho."),
+                        # ui.tags.li("The combined effect of of outdoor air pollution and indoor air pollution ", ui.a("kills about 6.7 million people", href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health", target="_blank"), " around the world every year."),
+                        ui.tags.li("El efecto combinado de la contaminación del aire exterior y la contaminación del aire interior ", ui.a("mata a unos 6.7 millones de personas", href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health", target="_blank"), " en todo el mundo cada año."),
                     ),
                     # ui.p(ui.tags.b("How is air pollution measured?")),
-                    ui.p(ui.tags.b("如何衡量空气污染？")),
+                    ui.p(ui.tags.b("¿Cómo se mide la contaminación del aire?")),
                     ui.tags.ul(
                         # ui.tags.li("Different sensors detect different types of air pollution. Most air monitors measure one or two"), 
-                        ui.tags.li("不同的监测器测试不同的空气污染。大部分的空气监测器能测试一至两种污染"), 
+                        ui.tags.li("Diferentes sensores detectan diferentes tipos de contaminación del aire. La mayoría de los monitores de aire miden uno o dos."), 
                         # ui.tags.li("The most common air monitors measure particulate matter (PM 2.5), a mixture of the tiny things that get into your lungs when you breathe"),
-                        ui.tags.li("最常见的监测器测试微粒 (PM 2.5)，人类呼吸时吸进肺部的细小物体"),
+                        ui.tags.li("Los monitores de aire más comunes miden las partículas en suspensión (PM 2.5), una mezcla de las cosas diminutas que pueden llegar a los pulmones cuando se respira."),
                         # ui.tags.li("PM 2.5 is counted in micrograms per cubic meter of air (µg/m³) "),
-                        ui.tags.li("是以 每立方米含多少微克 而衡量 "),
+                        ui.tags.li("Las PM 2.5 se cuentan en microgramos por metro cúbico de aire (µg/m³)"),
                     ),
                     # ui.p(ui.tags.b("How can you tell when the air quality is bad?")),
-                    ui.p(ui.tags.b("如何分辨不良的空气素质？")),
+                    ui.p(ui.tags.b("¿Cómo se sabe si la calidad del aire es mala?")),
                     ui.tags.ul(
                         # ui.tags.li("There is no safe level of air pollution"),
-                        ui.tags.li("并没有安全的空气污染度"),
+                        ui.tags.li("No existe un nivel seguro de contaminación atmosférica"),
                         # ui.tags.li("To make air quality easier to understand, the US EPA uses PM2.5 readings to calculate the Air Quality Index (AQI)"),
-                        ui.tags.li("为了让空气素质容易理解，美国 EPA (环境保护署) 使用 PM 2.5 数据判断 Air Quality Index 空气素质指标 (AQI)"),
+                        ui.tags.li("Para que la calidad del aire sea más sencilla de entender, la EPA de EE. UU. utiliza las lecturas de PM2.5 para calcular el Índice de Calidad del Aire (AQI, por sus siglas en inglés)."),
                         # ui.tags.li("AQI is a scale that goes from zero (no pollution) to 500 (extremely high amounts of pollution)"),
-                        ui.tags.li("AQI 空气素质指标 是一个从零 (没有污染) 至 500 (极高污染度) 的指数"),
+                        ui.tags.li("El AQI es una escala que va de cero (sin contaminación) a 500 (cantidades extremadamente altas de contaminación)."),
                         # ui.tags.li("People from “sensitive groups” (children, the elderly, or people with heart and lung conditions) should often stay inside if the AQI is high")
-                        ui.tags.li("当 AQI 指数甚高， 属于 “敏感群体” 的人群 (小孩、耆老、患有心脏或肺部疾病的人) 应该尽量避免外出")
+                        ui.tags.li("Las personas de “grupos sensibles” (niños, ancianos o personas con afecciones cardíacas y pulmonares) deben permanecer en el interior si el AQI es alto.")
                     ),
                     ui.output_table("aqi_ranges")
                 ),
                 # ui.accordion_panel( "About this project",
-                ui.accordion_panel( "关于本项目",
+                ui.accordion_panel( "Acerca de este proyecto",
                                    
                     # ui.p(ui.tags.b("What will happen to the suggestions people submit?")),
-                    ui.p(ui.tags.b(" 递交至网页的建议地点会如何处理？")),
+                    ui.p(ui.tags.b("¿Qué pasará con las sugerencias que envíen las personas?")),
                     ui.div(
                         # ui.p("Neighbors For Environmental Justice (",ui.a("N4EJ", href="http://n4ej.org", target="_blank"),") is collecting this data."),
-                        ui.p("Neighbors For Environmental Justice (争取环境正义邻居团",ui.a("N4EJ", href="http://n4ej.org", target="_blank"),") 会搜集所有建议地点。"),
+                        ui.p("Neighbors For Environmental Justice (",ui.a("N4EJ", href="http://n4ej.org", target="_blank"),") está recopilando estos datos."),
                         # ui.p("Suggestions are public as soon as they are submitted (you can see them on the 'Explore the data' page). N4EJ will share them with the Department of Public Health, which has the final say on where monitors are installed."),
-                        ui.p("建议地点被递交后便立刻公开 (可在 ’探察数据‘ 参看)。N4EJ 将会与公共卫生局分享，而卫生局拥有安装监测器地点的最后决定权。"),
+                        ui.p("Las sugerencias son públicas tan pronto como se envían (puedes verlas en la página “Explorar los datos”). N4EJ las compartirá con el Departamento de Salud Pública, cuál tiene la última palabra sobre dónde se instalan los monitores."),
                         class_="faq_answer"
                     ),
 
                     # ui.p(ui.tags.b("Who is this tool for? Do I have to be part of N4EJ to use it or share it?")),
-                    ui.p(ui.tags.b("这个应用是为谁而设？应用是否只限 N4EJ 成员使用或分享？")),
+                    ui.p(ui.tags.b("¿Para quién es esta herramienta? ¿Tengo que ser parte de N4EJ para usarla o compartirla?")),
                     ui.div(
                         # ui.p("This tool is for everyone! You don't have to be part of N4EJ to suggest air monitor locations, or to share this with others. This is just a way for people to learn about their neighborhood and offer feedback."),
-                        ui.p(" 这应用是为大众而设！建议监测器地点以及分享应用网页、无需是 N4EJ 成员。应用的目的是帮助市民更加了解他们的邻里和提出建议。"),
+                        ui.p("¡Esta herramienta es para todos! No tienes que ser parte de N4EJ para sugerir ubicaciones de monitores de aire o para compartir esto con otros. Esta es una manera en la que las personas pueden aprender sobre su vecindario y ofrecer comentarios."),
                         # ui.p("If you have questions or ideas and want to get in touch, email us at info@n4ej.org"),
-                        ui.p("您若想向我们提问或提议，请电邮至 info@n4ej.org。"),
+                        ui.p("Si tienes preguntas o ideas y quieres ponerte en contacto, envíanos un correo electrónico a info@n4ej.org"),
                         class_="faq_answer"
                     ),
 
                     # ui.p(ui.tags.b("When will the monitors go up?")),
-                    ui.p(ui.tags.b("空气监测器会在什么时候安装？")),
+                    ui.p(ui.tags.b("¿Cuándo se instalarán los monitores?")),
                     ui.div(
                         # ui.p("We don't really know."),
-                        ui.p("现时还没确实。"),
+                        ui.p("La verdad es que no lo sabemos."),
                         # ui.p("""As of January 2025, the city has signed contracts with a non-profit called the Illinois Public Health Initiative to "help coordinate community engagement and identify members for an advisory group to inform sensor placement." """),
-                        ui.p("""于 2025年1月，市政府已与一个叫 Illinois Public Health Initiative (伊州公共健康项目) 的非牟利机构签订合同 - 授权该机构 “安排社区外展活动以及为监测器安装地点建议委员会提名成员。” """),
+                        ui.p("""En enero de 2025, la ciudad firmó contratos con una organización sin fines de lucro, llamada Illinois Public Health Initiative con el objetivo de «ayudar a coordinar la participación de la comunidad e identificar a los miembros de un grupo asesor para informar sobre la ubicación de los sensores»."""),
                         # ui.p("Currently the city's plan is: "),
-                        ui.p("市政府目前的计划程序是: "),
+                        ui.p("Actualmente, el plan de la ciudad es el siguiente: "),
                             ui.tags.ol(
                                 # ui.tags.li("The non-profit will suggest members of an advisory group"),
-                                ui.tags.li("非牟利机构将会提名建议委员会成员"),
+                                ui.tags.li("La organización sin fines de lucro sugerirá a los miembros de un grupo asesor."),
                                 # ui.tags.li("The group will advise the city on taking community input and placing sensors"),
-                                ui.tags.li(" 委员会将会至市政府作出关于社区民意以及监测器安装地点的建议"),
+                                ui.tags.li(" El grupo asesorará a la ciudad sobre cómo tomar en cuenta las opiniones de la comunidad y colocar los sensores."),
                                 # ui.tags.li("The city will ask people where monitors should go"),
-                                ui.tags.li("市政府会向市民咨询监测器该安装的地点"),
+                                ui.tags.li("La ciudad preguntará a la gente dónde deberían ir los monitores."),
                                 # ui.tags.li("The city will decide where to put the sensors"),
-                                ui.tags.li("市政府会判断最后安装地点"),
+                                ui.tags.li("La ciudad decidirá dónde colocar los sensores. Entonces podrán empezar a instalarlos."),
                                 # ui.tags.li("Then they can start putting them up.")
-                                ui.tags.li("最后，市政府会开始安装监测器。")
+                                ui.tags.li("Entonces iniciarán su instalación.")
                             ),
                         # ui.p("However, the city staffer coordinating the project was ", 
-                        ui.p("- 可是，安装监测器项目的市政府组织员与 11月  ", 
+                        ui.p("Sin embargo, en noviembre se le", 
                             #  ui.a("asked to resign", href="https://chicago.suntimes.com/the-watchdogs/2024/12/13/raed-mansour-air-pollution-environmental-justice-brandon-johnson-horace-smith-chicago-climate-change", target="_blank"),
-                             ui.a("被要求辞职", href="https://chicago.suntimes.com/the-watchdogs/2024/12/13/raed-mansour-air-pollution-environmental-justice-brandon-johnson-horace-smith-chicago-climate-change", target="_blank"),
+                             ui.a(" pidió al empleado municipal que coordinaba el proyecto que renunciara", href="https://chicago.suntimes.com/the-watchdogs/2024/12/13/raed-mansour-air-pollution-environmental-justice-brandon-johnson-horace-smith-chicago-climate-change", target="_blank"),
                             #  " in November. Nobody has been hired to replace him, and his projects have not been reassigned to any one staff member."),
-                             "。至今，市政府还没聘请新组织员，项目也并没有分配给一位指定工作人员。"),
+                             " No se ha contratado a nadie para sustituirlo y sus proyectos no se han reasignado a ningún miembro del personal."),
                         # ui.p("Instead of waiting for the city to act, N4EJ built this tool and we are taking suggestions now."),
-                        ui.p("与其等待市政府采取行动，N4EJ 决定设立这个应用，主动征求安装地点提议。"),
+                        ui.p("En lugar de esperar a que la ciudad actúe, N4EJ creó esta herramienta y ahora estamos aceptando sugerencias."),
                         class_="faq_answer"
                     ),
 
                     # ui.p(ui.tags.b("Why is the city installing air monitors?")),
-                    ui.p(ui.tags.b("市政府为何要安装空气监测器？")),
+                    ui.p(ui.tags.b("¿Por qué está instalando la ciudad monitores de aire?")),
 
                     ui.div(
                         # ui.p("The air monitors are required by a ", ui.a("federal agreement", href="https://chicago.suntimes.com/2023/5/12/23720343/hud-environmental-racism-lightfoot-general-iron-environmental-justice-housing-urban-development", target="_blank"), " the city signed in 2023."),
-                        ui.p("市政府于 2023年 与 ", ui.a("联邦政府签订协议", href="https://chicago.suntimes.com/2023/5/12/23720343/hud-environmental-racism-lightfoot-general-iron-environmental-justice-housing-urban-development", target="_blank"), " 安装监测器。"),
+                        ui.p("Los monitores de aire son exigidos por un ", ui.a("acuerdo federal", href="https://chicago.suntimes.com/2023/5/12/23720343/hud-environmental-racism-lightfoot-general-iron-environmental-justice-housing-urban-development", target="_blank"), " que la ciudad firmó en 2023."),
                         class_="faq_answer"
                     ), 
 
                     # ui.p(ui.tags.b("How is N4EJ involved?")),
-                    ui.p(ui.tags.b("N4EJ 在安装监测器项目有什么角色？")),
+                    ui.p(ui.tags.b("¿Cómo está involucrado N4EJ?")),
                     ui.div(
                         # ui.p("N4EJ is a member of the city's Environmental Equity Working Group. We helped to complete the city's ", ui.a("Cumulative Impacts Assessment", href="https://www.chicago.gov/city/en/depts/cdph/supp_info/Environment/cumulative-impact-assessment.html", target="_blank"),
-                        ui.p("(争取环境正义工作队) 的成员之一。我们有助完成市政府的 ", ui.a("Cumulative Impacts Assessment", href="https://www.chicago.gov/city/en/depts/cdph/supp_info/Environment/cumulative-impact-assessment.html", target="_blank"),
+                        ui.p("N4EJ es miembro del Grupo de Trabajo de Equidad Ambiental de la ciudad. Ayudamos a completar la ", ui.a("Evaluación de Impactos Acumulativos", href="https://www.chicago.gov/city/en/depts/cdph/supp_info/Environment/cumulative-impact-assessment.html", target="_blank"),
                             #  " and co-chaired the assessment's Communications & Engagement Working Group.",),
-                            " 这应用并非市政府的官方项目 - 是本机构为让社区居民能参与发声而制造的工具。",),
+                            " de la ciudad y copresidimos el Grupo de Trabajo de Comunicaciones y Compromiso de la evaluación. Sin embargo, esta herramienta no es un proyecto oficial de la ciudad, es algo que hicimos para ayudar a que más personas se involucren.",),
                         # ui.p("It has been challenging to work with the city because Chicago has a long history of environmental racism, and of making promises it does not keep. But we believe these projects are important, and we are committed to seeing them happen. We are also determined to hold the city to its promises."),
-                        ui.p("与市政府合作并非一件简单的事情，因为市政府拥有一个容许环境种族歧视和不守诺言的往绩。但我们坚信这些项目的重大重要性，并坚定把项目实施。我们也下了决心让市政府遵守诺言。"),
+                        ui.p("Ha sido un reto trabajar con la ciudad porque Chicago tiene una larga historia de racismo ambiental y de hacer promesas que no cumple. Pero creemos que estos proyectos son importantes y estamos comprometidos a verlos realizados. También estamos decididos a hacer que la ciudad mantenga sus promesas."),
                         class_="faq_answer"
                     ), 
 
                     # ui.p(ui.tags.b("Will this make the air better?")),
-                    ui.p(ui.tags.b("这应用会改善空气素质吗？")),
+                    ui.p(ui.tags.b("¿Esto mejorará el aire?")),
                     ui.div(
                         # ui.p("Data by itself is never enough to change things. Change takes people, and we need your help! Talk with people you know, help us pressure the city and state, and together we can make the air cleaner and safer for everyone."),
-                        ui.p("单凭数据是不足够改变事情。改变的动力是人力，众志成城！市民携手合作就能促进市政府州政府 执行现有法律、通过新法律、制止把污染重复遭受在最弱势的邻里、为大众争取更纯净更安全的空气。"),
+                        ui.p("Los datos por sí solos nunca son suficientes para cambiar las cosas. El cambio requiere de las personas, ¡y necesitamos su ayuda! Juntos podemos seguir presionando a la ciudad y al estado para que hagan cumplir las normas existentes, aprueben otras nuevas, dejen de contaminar los vecindarios y hagan que el aire sea más limpio y seguro para todos."),
                         class_="faq_answer"
                     ), 
 
 
                 ),    
                 id = "accordion_faq",
-                open = ["空气监测器"]                       
+                open = ["Monitores de aire"]                       
             ),
             id="faq"
             ),
         ),
         # ui.nav_panel("Explore data",
-        ui.nav_panel("探察数据",
+        ui.nav_panel("Explorar los datos",
             ui.row(
                 ui.layout_columns(
                     ui.card(
@@ -352,19 +369,19 @@ app_ui = ui.page_auto(
                         ui.output_code(id="explore_details"),
                         ui.accordion(
                             # ui.accordion_panel("About this data",
-                            ui.accordion_panel("关于这数据",
+                            ui.accordion_panel("Acerca de estos datos",
                                 # ui.p("This data was compiled by the Chicago Department of Public Health for the city's 2023 Cumulative Impacts Assessment."),
-                                ui.p("该数据是 由芝加哥公共卫生局，为市政府的长期环境污染累积影响评估 而搜集。"),
+                                ui.p("Estos datos fueron recopilados por el Departamento de Salud Pública de Chicago para la Evaluación de Impactos Acumulativos de la ciudad de 2023."),
                                 # ui.p("This ", ui.a("summary", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_MethodologyPoster_Updated-11.14.2023.pdf", target="_blank"),
-                                ui.p("这 ", ui.a("概要", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_MethodologyPoster_Updated-11.14.2023.pdf", target="_blank"),
+                                ui.p("Este ", ui.a("resumen de", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_MethodologyPoster_Updated-11.14.2023.pdf", target="_blank"),
                                 #  " explains how the EJ Index Score was calculated. ", ui.a("Read more", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_ChicagoEnvironmentalJusticeIndexMethodology_Updated_11.21.2023.pdf", target = "_blank"),
-                                " 详细描述统计 EJ Index Score (环境正义指数) 的程序。 您可", ui.a("参考", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_ChicagoEnvironmentalJusticeIndexMethodology_Updated_11.21.2023.pdf", target = "_blank"),
+                                " datos explica cómo se calculó la puntuación del Índice de Justicia Ambiental. ", ui.a("Lea más", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/2023-nov/CIA_ChicagoEnvironmentalJusticeIndexMethodology_Updated_11.21.2023.pdf", target = "_blank"),
                                 # " about the data they used, or ", ui.a("download a copy.", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/Chicago-EJ-Index-Values_2023.10.04.xlsx", target="_blank")),
-                                " 统计过程所采用的数据，或 ", ui.a("下载数据文档。", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/Chicago-EJ-Index-Values_2023.10.04.xlsx", target="_blank")),
+                                " sobre los datos que utilizaron o ", ui.a("descargue una copia.", href="https://www.chicago.gov/content/dam/city/depts/cdph/environment/CumulativeImpact/Chicago-EJ-Index-Values_2023.10.04.xlsx", target="_blank")),
                                 # ui.download_link("download_suggestions", label = "Download suggested locations"),
-                                ui.download_link("download_suggestions", label = "下载安装地点建议列表"),
+                                ui.download_link("download_suggestions", label = "Descargar ubicaciones sugeridas"),
                                 # ui.input_checkbox(id="show_suggestions", label="Show suggestions on map", value=False)
-                                ui.input_checkbox(id="show_suggestions", label="在地图上显示地点建议", value=False)
+                                ui.input_checkbox(id="show_suggestions", label="Mostrar sugerencias en el mapa", value=False)
                             ),
                             ui.accordion_panel("Environmental exposure",
                                 ui.output_ui("env_exposure")
@@ -393,9 +410,9 @@ app_ui = ui.page_auto(
         ),
         ui.nav_spacer(),
         ui.nav_control(ui.div(ui.a("English", href="https://chicagoaqi.com", target="_blank"), style="margin-top: .5rem;")),
-        ui.nav_control(ui.div(ui.a("Español", href="https://es.chicagoaqi.com", target="_blank"), style="margin-top: .5rem;")),
+        ui.nav_control(ui.div(ui.a("汉语", href="https://cn.chicagoaqi.com", target="_blank"), style="margin-top: .5rem;")),
 
-        selected="建议空气监测器安装地点",
+        selected="Sugerir una ubicación",
         id="primary_nav"
     ),
     ui.include_css('app_css.css'),
@@ -488,11 +505,11 @@ def server(input, output, session):
             print(e)
 
 
-    @reactive.effect # 探察数据 choropleth layers
+    @reactive.effect # Explorar los datos choropleth layers
     @reactive.event(input.index_layers)
     def _():
         print(input.index_layers())
-        if input.primary_nav == "探察数据": 
+        if input.primary_nav == "Explorar los datos": 
             
             replace = None
             try:
@@ -520,7 +537,7 @@ def server(input, output, session):
             drag_marker.visible = True 
             search_marker.visible = False 
             drag_marker.location=kwargs.get('coordinates')
-            if(input.primary_nav()) == "探察数据":
+            if(input.primary_nav()) == "Explorar los datos":
                 coordinates.set(drag_marker.location)
 
     the_map.on_interaction(handle_click)
@@ -603,7 +620,7 @@ def server(input, output, session):
     # @reactive.event(coordinates)
     def _():
         print("Coordinates: ", coordinates())
-        if input.primary_nav() == "探察数据":
+        if input.primary_nav() == "Explorar los datos":
             new_details = {}
             for ml in mlc:
                 print(f"locating point in {mlc[ml].label}")
@@ -612,8 +629,8 @@ def server(input, output, session):
                 if area:
                     new_details[mlc[ml].point_label] = area 
 
-            if '人口普查调查区' in new_details:
-                census_tract.set(new_details['人口普查调查区'])
+            if 'distrito censal' in new_details:
+                census_tract.set(new_details['distrito censal'])
 
             point_details.set(new_details)
 
@@ -691,17 +708,17 @@ def server(input, output, session):
         query_job = bq.query(query, job_config=job_config)  # Make an API request.
 
         m = get_modal(
-            title="感谢您的建议！",
+            title="¡Gracias!",
             prompt=ui.TagList(
                 # ui.p("Your suggestion has been submitted. (Feel free to suggest more locations)"),
-                ui.p("您希望从争取环境正义邻居团收到关于市政府安装空气监测器的定期讯息？"),
-                ui.input_text(id="email_address", label="电子邮箱", width="100%")
+                ui.p("¿Desea recibir actualizaciones sobre el control del aire de la ciudad de Neighbors For Environmental Justice?"),
+                ui.input_text(id="email_address", label="Dirección de correo electrónico", width="100%")
             ),
-            buttons = [ui.modal_button("不希望"), ui.input_action_button("email_signup", "订阅")]
+            buttons = [ui.modal_button("No, gracias"), ui.input_action_button("email_signup", "¡Inscríbame!")]
         )
         ui.modal_show(m)
         
-        ui.update_navs("primary_nav", selected="探察数据")
+        ui.update_navs("primary_nav", selected="Explorar los datos")
     
     @reactive.effect 
     @reactive.event(input.email_signup)
@@ -792,7 +809,7 @@ def server(input, output, session):
     @reactive.effect
     @reactive.event(input.primary_nav, input.index_layers)
     def get_choro_layer():
-        if input.primary_nav() == "探察数据": 
+        if input.primary_nav() == "Explorar los datos": 
             
             for layer in explore_map.layers:
                 # if layer.name != "OpenStreetMap.Mapnik":
@@ -825,9 +842,9 @@ def server(input, output, session):
     @reactive.effect 
     @reactive.event(input.primary_nav, input.index_layers)
     def get_corridors():
-        if input.primary_nav() == "探察数据":
+        if input.primary_nav() == "Explorar los datos":
             explore_map_layers = [layer.name for layer in explore_map.layers]
-            if "工业区域" not in explore_map_layers:
+            if "corredor industrial" not in explore_map_layers:
                 explore_map.add(get_map_layer(
                             layer_name = mlc['corridors'].label,
                             filename = mlc['corridors'].filename, 
@@ -838,9 +855,9 @@ def server(input, output, session):
     @reactive.effect 
     @reactive.event(current_choro_layer)
     def get_communities():
-        if input.primary_nav() == "探察数据":
+        if input.primary_nav() == "Explorar los datos":
             explore_map_layers = [layer.name for layer in explore_map.layers]
-            if "邻里界线" not in explore_map_layers:
+            if "zona comunidad" not in explore_map_layers:
                 explore_map.add(get_map_layer(
                             layer_name = mlc['communities'].label,
                             filename = mlc['communities'].filename, 
@@ -851,11 +868,11 @@ def server(input, output, session):
     @reactive.effect 
     @reactive.event(census_tract)
     def get_tracts():
-        if input.primary_nav() == "探察数据":
+        if input.primary_nav() == "Explorar los datos":
             explore_map_layers = [layer.name for layer in explore_map.layers]
             print(explore_map_layers)
             for layer in explore_map.layers:
-                if layer.name == "人口普查调查区":
+                if layer.name == "distrito censal":
                     explore_map.remove(layer) 
             
             explore_map.add(
@@ -884,11 +901,8 @@ def server(input, output, session):
     @render.download(filename=f"chicagoaqi_suggested_locations_{datetime.now().strftime("%Y%m%d")}.csv" )
     def download_suggestions():        
         with io.BytesIO() as buf:
-            # df = bq.query("SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations").to_dataframe()
-            # print(f"Retrieved {len(df)} suggestions")
             print(len(suggested_locations()))
             suggested_locations().to_csv(buf, index=False)
-            # df
             yield buf.getvalue()
 
 app = App(app_ui, server)

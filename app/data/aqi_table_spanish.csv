@@ -1,0 +1,8 @@
+Valores del índice de calidad del aire (AQI),Niveles de preocupación para la salud,Colores
+Cuando el AQI está en este rango: ...,las condiciones de calidad del aire son: ...,como lo simboliza este color:
+0-50,Bueno,Verde
+51-100,Moderado,Amarillo
+101-150,Insalubre para grupos sensibles,Naranja
+151 to 200,Insalubre,Rojo
+201 to 300,Muy insalubre,Morado
+301 to 500,Peligroso,Marrón
