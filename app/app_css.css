@@ -1,0 +1,20 @@
+.nav .nav-underline {
+    background-color: #efefef;
+}
+.points .point { fill: rgb(245, 245, 245); }
+                    
+.card-header { background-color: #f9f9f9; }
+.ul .li { margin-bottom: 10px; }
+.faq_answer {
+    padding-left: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+          
+#attribution { margin-bottom: 1rem; }
+#map { margin-bottom: 15px; }
+#language_choice-label {display:None;}
+#page_container { max-width: 1000px; }
+#explore_data {min-height:40em;}
+.main-svg { width:100%; }
+.strip-plot { width:100%; }
+#explore_map_card .form-group { display: block ruby; }

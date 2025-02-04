@@ -22,7 +22,7 @@ import os
 #     print(e)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'cloud_function_invoker.json'
 bq = bigquery.Client()                              
-aqi_table = pd.read_csv('data/aqi_table.csv')
+aqi_table = pd.read_csv('data/aqi_table_english.csv')
 
 ej_indices = {
         "exposure": ['PM25', 'OZONE', 'DIESEL', 'CANCER', 'TRELEASES','TRAFFIC', 'HINDEX', 'LEAD'],
@@ -91,9 +91,9 @@ eji_field_labels = dict(zip(eji_fields.var_name.to_list(), eji_fields.readable_n
 eji_field_labels_reversed = dict(zip(eji_fields.readable_name.to_list(), eji_fields.var_name.to_list()))
 
 app_ui = ui.page_auto( 
-    ui.output_image("logo", inline=True),
+    ui.a(ui.output_image("logo", inline=True), href="/"),
     ui.div( ui.help_text("a tool from Neighbors For Environmental Justice"), id="attribution", style="text-align: right;"),
-    # ui.input_select( id="language_choice", label='Language', choices=["English", "Español", "中文"], selected="English", width="120px"),
+    
     ui.navset_card_underline(
 
         ui.nav_panel( "Suggest a location",
@@ -183,7 +183,7 @@ app_ui = ui.page_auto(
                     ui.tags.ul(
                         ui.tags.li("It makes existing health problems worse"), 
                         ui.tags.li("It causes new health problems, like asthma, headaches, and chest pain"),
-                        ui.tags.li("The combined effect of of outdoor air pollution and indoor air pollution ", ui.a("kills about 6.7 million people", href="https://www.who.int/data/gho/data/indicators/indicator-details/GHO/ambient-air-pollution-attributable-deaths", target="_blank"), " around the world every year."),
+                        ui.tags.li("The combined effect of of outdoor air pollution and indoor air pollution ", ui.a("kills about 6.7 million people", href="https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health", target="_blank"), " around the world every year."),
                     ),
                     ui.p(ui.tags.b("How is air pollution measured?")),
                     ui.tags.ul(
@@ -310,32 +310,13 @@ app_ui = ui.page_auto(
             
         
         ),
+        ui.nav_spacer(),
+        ui.nav_control(ui.div(ui.a("汉语", href="https://cn.chicagoaqi.com", target="_blank"), style="margin-top: .5rem;")),
+        ui.nav_control(ui.div(ui.a("Español", href="https://es.chicagoaqi.com", target="_blank"), style="margin-top: .5rem;")),
         selected="Suggest a location",
         id="primary_nav"
     ),
-    ui.tags.style("""
-                  
-        .nav .nav-underline {
-            background-color: #efefef;
-        }
-        .points .point { fill: rgb(245, 245, 245); }
-                  
-        .card-header { background-color: #f9f9f9; }
-        .ul .li { margin-bottom: 10px; }
-        .faq_answer {
-            padding-left: 1.5rem;
-            padding-bottom: 1.5rem;
-        }
-        #attribution { margin-bottom: 1rem; }
-        #map { margin-bottom: 15px; }
-        #language_choice-label {display:None;}
-        #page_container { max-width: 1000px; }
-        #explore_data {height:1000px;}
-        .main-svg { width:100%; }
-        .strip-plot { width:100%; }
-        #explore_map_card .form-group { display: block ruby; }
-        """
-    ),
+    ui.include_css('app_css.css'),
     id="page_container"
 )
 
@@ -484,8 +465,8 @@ def server(input, output, session):
 
     def get_ej_index_row(measure):
         pctile = get_ej_pctile(census_tract(), measure)
-        img_src = f"{census_tract()}_{measure}.svg"
-        with open(f"assets/ej/{img_src}.png", 'rb') as image_file:
+        img_src = f"{census_tract()}_{measure}"
+        with open(f"assets/ej_index_strips/{img_src}.png", 'rb') as image_file:
             base64_bytes = base64.b64encode(image_file.read())
             base64_string = base64_bytes.decode()
         
