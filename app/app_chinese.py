@@ -882,13 +882,13 @@ def server(input, output, session):
         )
 
     @render.download(filename=f"chicagoaqi_suggested_locations_{datetime.now().strftime("%Y%m%d")}.csv" )
-    def download_suggestions():        
+    def download_suggestions():
+        
+        query = "SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations"
+        df = bq.query(query).to_dataframe()
+    
         with io.BytesIO() as buf:
-            # df = bq.query("SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations").to_dataframe()
-            # print(f"Retrieved {len(df)} suggestions")
-            print(len(suggested_locations()))
-            suggested_locations().to_csv(buf, index=False)
-            # df
+            df.to_csv(buf, index=False)
             yield buf.getvalue()
 
 app = App(app_ui, server)

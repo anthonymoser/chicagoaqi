@@ -136,9 +136,9 @@ app_ui = ui.page_auto(
                         # ui.card_header("2. TELL US ABOUT IT (optional)"),
                         ui.card_header("2.CUÉNTENOS (opcional)"),
                         # ui.input_text(id="suggested_label", label="What would you call this spot?", width="100%", placeholder="example: McKinley Park / MAT Asphalt / the playground"),
-                        ui.input_text(id="suggested_label", label="¿Qué nombre le pondría a este lugar?", width="100%"),
+                        ui.input_text(id="suggested_label", label="¿Qué nombre le pondría a este lugar?", width="100%", placeholder = "ej. McKinley Park, MAT Asphalt, la escuela"),
                         # ui.input_text_area(id="reason", label="Why put an air monitor there?", width="100%", placeholder="example: I live nearby / it always smells bad"),
-                        ui.input_text_area(id="reason", label="¿Por qué poner un monitor de aire allí?", width="100%"),
+                        ui.input_text_area(id="reason", label="¿Por qué poner un monitor de aire allí?", width="100%", placeholder="ej. cerca de un parque, hay niños que juegan aquí, hay muchas tiendas locales allá"),
                         # ui.card_footer(ui.input_action_button("btn_submit", label="Submit", width="100%"))
                         ui.card_footer(ui.input_action_button("btn_submit", label="Enviar", width="100%"))
                     ),
@@ -899,10 +899,13 @@ def server(input, output, session):
         )
 
     @render.download(filename=f"chicagoaqi_suggested_locations_{datetime.now().strftime("%Y%m%d")}.csv" )
-    def download_suggestions():        
+    def download_suggestions():
+        
+        query = "SELECT lat, long, label, reason, datetime(time_submitted, 'America/Chicago') as time_submitted, session_id FROM chicago_aqi.suggested_locations"
+        df = bq.query(query).to_dataframe()
+    
         with io.BytesIO() as buf:
-            print(len(suggested_locations()))
-            suggested_locations().to_csv(buf, index=False)
+            df.to_csv(buf, index=False)
             yield buf.getvalue()
 
 app = App(app_ui, server)
